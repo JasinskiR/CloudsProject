@@ -15,38 +15,36 @@ function Chat({ userId }) {
     useEffect(() => {
         if (userId) {
             socket.emit('registerUser', userId);
-
+    
             const fetchUsers = async () => {
                 try {
                     const response = await axios.get('http://localhost:4000/api/users');
-                    // Exclude the current user from the list of users
                     setUsers(response.data.filter(user => user !== userId));
                 } catch (error) {
                     console.error('Error fetching users:', error);
                 }
             };
-
+    
             fetchUsers();
-
+    
             socket.on('connect', () => {
                 setStatus('Connected to server');
                 console.log('Connected:', socket.id);
             });
-
+    
             socket.on('disconnect', () => {
                 setStatus('Disconnected from server');
                 console.log('Disconnected:', socket.id);
             });
-
+    
+            // Update chat state directly and shallowly copy the chat object
             socket.on('receiveMessage', (data) => {
                 setChat((prevChat) => ({
                     ...prevChat,
-                    [data.senderId]: prevChat[data.senderId]
-                        ? [...prevChat[data.senderId], data]
-                        : [data],
+                    [data.senderId]: [...(prevChat[data.senderId] || []), data],
                 }));
             });
-
+    
             return () => {
                 socket.off('connect');
                 socket.off('disconnect');
