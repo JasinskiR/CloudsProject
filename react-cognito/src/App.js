@@ -17,7 +17,7 @@ Amplify.configure({
 
 function App() {
   const [jwtToken, setJwtToken] = useState('');
-  const [userId, setUserId] = useState('');
+  const [userEmail, setUserEmail] = useState('');
 
   useEffect(() => {
     fetchJwtToken();
@@ -80,12 +80,16 @@ function App() {
     }}
     >
       {({ signOut, user }) => {
-        setUserId(user.username); // Set userId when logged in
+        // Set the user email to pass it to the Chat component
+        if (user && user.attributes && user.attributes.email !== userEmail) {
+          setUserEmail(user.attributes.email);
+        }
+        
         return (
           <div>
             <button onClick={signOut}>Sign out</button>
             {jwtToken ? (
-              <Chat userId={userId} /> // Pass userId to Chat component
+              <Chat email={userEmail} /> // Pass userEmail to Chat component as email prop
             ) : (
               <div>Loading chat...</div>
             )}
