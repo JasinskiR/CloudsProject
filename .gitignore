@@ -5,7 +5,8 @@
 node_modules/
 /.pnp
 .pnp.js
-
+/.idea
+.idea/
 # testing
 /coverage
 
@@ -24,3 +25,4 @@ yarn-debug.log*
 yarn-error.log*
 samconfig.toml
 aws-exports.js
+rds_config.js
