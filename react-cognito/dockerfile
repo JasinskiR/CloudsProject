@@ -1,0 +1,17 @@
+FROM node:18-alpine
+
+WORKDIR /react-cognito
+
+COPY package*.json ./
+RUN npm install
+
+COPY . .
+
+RUN npm run build
+
+RUN npm install -g serve
+
+EXPOSE 3000
+
+# Inject runtime variables and serve the React app
+CMD ["/bin/sh", "-c", "echo \"window.env = { REACT_APP_SERVER_URL: '$REACT_APP_SERVER_URL' };\" > /react-cognito/build/env.js && serve -s build -l 3000"]
