@@ -4,7 +4,7 @@ There is a lambda connected to cognito at post registration which add user to RD
 ### Bastion
 To secure communication with RDS DB (which we want to secure from the world) it is nice to use a some point of fire wall (gate) via additional EC2 instance called Bastion\
 Bastion host should be in the same Availability Zone as RDS.\
-RDS shoul has security group that allows communication through that bastion EC2 at designated port (5432)
+RDS should has security group that allows communication through that bastion EC2 at designated port (5432)
 ### Lambda
 Nice to know:\
 Lambda should has security group that allows communication inboud (can be all traffic) and outbound to RDS port (which is 5432 in this case)\
