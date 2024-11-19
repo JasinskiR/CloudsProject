@@ -7,6 +7,11 @@ RUN npm install
 
 COPY . .
 
+# Step 6: Build the React app for production
+# Accept REACT_APP_SERVER_URL as a build argument
+ARG REACT_APP_SERVER_URL
+ENV REACT_APP_SERVER_URL=$REACT_APP_SERVER_URL
+
 RUN npm run build
 
 RUN npm install -g serve
