@@ -2,8 +2,11 @@ import React, { useEffect, useState } from 'react';
 import io from 'socket.io-client';
 import axios from 'axios';
 
-const SERVER_URL = process.env.REACT_APP_SERVER_URL || window.env.REACT_APP_SERVER_URL;
-console.log("Connecting to server:", SERVER_URL);
+// const SERVER_URL = process.env.REACT_APP_SERVER_URL;
+// console.log(`Connecting to server:${SERVER_URL}`);
+const SERVER_URL = window._env_?.REACT_APP_SERVER_URL || "dummy_ip_from_code";
+console.log(`Connecting to server: ${SERVER_URL}`);
+
 
 const socket = io(SERVER_URL);
 

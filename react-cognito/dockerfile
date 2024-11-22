@@ -1,22 +1,35 @@
+# Step 1: Use Node.js image as a base image
 FROM node:18-alpine
 
+# Step 2: Set the working directory
 WORKDIR /react-cognito
 
+# Step 3: Copy package.json and install dependencies
 COPY package*.json ./
 RUN npm install
 
+# Step 4: Copy the rest of the app and build it
 COPY . .
-
-# Step 6: Build the React app for production
-# Accept REACT_APP_SERVER_URL as a build argument
-ARG REACT_APP_SERVER_URL
-ENV REACT_APP_SERVER_URL=$REACT_APP_SERVER_URL
 
 RUN npm run build
 
-RUN npm install -g serve
+# Step 5: Use nginx for serving static files
+FROM nginx:stable-alpine
 
-EXPOSE 3000
+RUN apk update && apk add perl
 
-# Inject runtime variables and serve the React app
-CMD ["/bin/sh", "-c", "echo \"window.env = { REACT_APP_SERVER_URL: '$REACT_APP_SERVER_URL' };\" > /react-cognito/build/env.js && serve -s build -l 3000"]
+# Step 6: Copy the built React app to nginx's web server directory
+COPY --from=0 /react-cognito/build /usr/share/nginx/html
+
+# Step 7: Copy the entrypoint script into the image
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+# Copy custom nginx configuration
+COPY nginx.conf /etc/nginx/nginx.conf
+
+
+# Step 8: Expose the default nginx port
+EXPOSE 80
+
+# Step 9: Set entrypoint for dynamic environment variable replacement
+ENTRYPOINT ["/entrypoint.sh"]
