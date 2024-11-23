@@ -2,7 +2,12 @@ import React, { useEffect, useState } from 'react';
 import io from 'socket.io-client';
 import axios from 'axios';
 
-const SERVER_URL = 'http://3.85.214.127:4000';
+// const SERVER_URL = process.env.REACT_APP_SERVER_URL;
+// console.log(`Connecting to server:${SERVER_URL}`);
+const SERVER_URL = window._env_?.REACT_APP_SERVER_URL || "dummy_ip_from_code";
+console.log(`Connecting to server: ${SERVER_URL}`);
+
+
 const socket = io(SERVER_URL);
 
 function Chat({ email }) {
@@ -20,17 +25,44 @@ function Chat({ email }) {
             console.log(`Fetching user ID for email: ${email}`);
             try {
                 const response = await axios.get(`${SERVER_URL}/api/getUserIdByEmail`, { params: { email } });
+                console.log("Server URL:", SERVER_URL);
                 console.log("User ID fetched:", response.data.id);
                 setUserId(response.data.id); // Set the database ID
             } catch (error) {
                 console.error('Error fetching user ID:', error);
             }
         };
-        
+
         if (email) fetchUserId();
     }, [email]);
 
-    // Fetch users and handle socket events
+    // Manage socket connection status
+    useEffect(() => {
+        const handleConnect = () => {
+            console.log("Socket connected");
+            setStatus('Connected to server');
+        };
+
+        const handleDisconnect = () => {
+            console.log("Socket disconnected");
+            setStatus('Disconnected from server');
+        };
+
+        // Register socket events
+        socket.on('connect', handleConnect);
+        socket.on('disconnect', handleDisconnect);
+
+        // Initial connection status check
+        setStatus(socket.connected ? 'Connected to server' : 'Connecting...');
+
+        // Cleanup
+        return () => {
+            socket.off('connect', handleConnect);
+            socket.off('disconnect', handleDisconnect);
+        };
+    }, []);
+
+    // Fetch users and handle chat messages
     useEffect(() => {
         if (!userId) return; // Ensure userId is available before proceeding
 
@@ -51,29 +83,19 @@ function Chat({ email }) {
 
         fetchUsers();
 
-        socket.on('connect', () => {
-            console.log("Socket connected");
-            setStatus('Connected to server');
-        });
-        
-        socket.on('disconnect', () => {
-            console.log("Socket disconnected");
-            setStatus('Disconnected from server');
-        });
-
-        socket.on('receiveMessage', (data) => {
+        const handleReceiveMessage = (data) => {
             console.log("Message received:", data);
             setChat((prevChat) => ({
                 ...prevChat,
                 [data.senderId]: [...(prevChat[data.senderId] || []), data],
             }));
-        });
+        };
 
-        // Cleanup on component unmount
+        socket.on('receiveMessage', handleReceiveMessage);
+
+        // Cleanup
         return () => {
-            socket.off('connect');
-            socket.off('disconnect');
-            socket.off('receiveMessage');
+            socket.off('receiveMessage', handleReceiveMessage);
         };
     }, [userId]);
 
@@ -101,7 +123,7 @@ function Chat({ email }) {
     const handleUserClick = async (user) => {
         setReceiverId(user.id);
         setSelectedUser(user);
-        
+
         try {
             console.log(`Fetching messages with user ID: ${user.id}`);
             const response = await axios.get(`${SERVER_URL}/api/messages/${userId}`, {
@@ -116,7 +138,6 @@ function Chat({ email }) {
             console.error('Error fetching messages:', error);
         }
     };
-    
 
     return (
         <div style={{ display: 'flex' }}>
@@ -145,17 +166,17 @@ function Chat({ email }) {
                 <h3>Chat with: {selectedUser ? selectedUser.email : 'Select a user'}</h3>
                 <div style={{ marginBottom: '10px', border: '1px solid #ccc', padding: '10px', minHeight: '100px' }}>
                     {selectedUser && chat[selectedUser.id]?.map((msg, idx) => (
-                        <p key={idx} style={{ 
-                            textAlign: msg.senderId === userId ? 'right' : 'left', 
-                            color: msg.senderId === userId ? 'blue' : 'black' 
+                        <p key={idx} style={{
+                            textAlign: msg.senderId === userId ? 'right' : 'left',
+                            color: msg.senderId === userId ? 'blue' : 'black'
                         }}>
                             <strong>{msg.senderId === userId ? 'You' : selectedUser.email}:</strong> {msg.content}
                         </p>
                     ))}
                 </div>
-                <input 
-                    value={message} 
-                    onChange={(e) => setMessage(e.target.value)} 
+                <input
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
                     placeholder="Type a message"
                 />
                 <button onClick={sendMessage}>Send</button>

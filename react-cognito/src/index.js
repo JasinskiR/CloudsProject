@@ -4,6 +4,13 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
+if (window.env) {
+  Object.entries(window.env).forEach(([key, value]) => {
+    process.env[key] = value; // Set the environment variables in process.env
+  });
+}
+console.log("Server URL index.js :", process.env.REACT_APP_SERVER_URL);
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
